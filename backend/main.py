@@ -115,13 +115,36 @@ def openai_error(message: str, status: int = 400, param: str | None = None, code
     })
 
 # ── Root & Health ──
+_FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    # Servir frontend se existir, senão info
-    frontend = Path(__file__).parent.parent / "frontend" / "index.html"
-    if frontend.exists():
-        return FileResponse(str(frontend))
-    return HTMLResponse(f"<h1>{PRODUCT_NAME} {VERSION}</h1><p>API em <a href='/docs'>/docs</a> | Frontend em <a href='/frontend/'>/frontend/</a></p>")
+    """Estúdio (fluxo focado: gravar/enviar amostra -> texto -> falar)."""
+    studio = _FRONTEND_DIR / "studio.html"
+    if studio.exists():
+        return FileResponse(str(studio), media_type="text/html")
+    legacy = _FRONTEND_DIR / "index.html"
+    if legacy.exists():
+        return FileResponse(str(legacy), media_type="text/html")
+    return HTMLResponse(f"<h1>{PRODUCT_NAME} {VERSION}</h1><p>API em <a href='/docs'>/docs</a></p>")
+
+
+@app.get("/classic", response_class=HTMLResponse)
+async def classic_ui():
+    """Versão completa com as 7 abas (clone do VoiceStudio original)."""
+    legacy = _FRONTEND_DIR / "index.html"
+    if legacy.exists():
+        return FileResponse(str(legacy), media_type="text/html")
+    raise HTTPException(404, "UI clássica não encontrada")
+
+
+@app.get("/app.js")
+async def legacy_js():
+    js = _FRONTEND_DIR / "app.js"
+    if js.exists():
+        return FileResponse(str(js), media_type="application/javascript")
+    raise HTTPException(404, "app.js não encontrado")
 
 @app.get("/api/health")
 async def health():
@@ -242,6 +265,11 @@ async def clone_voice(
     voice = voices_svc.create_cloned_voice(name, language, gender, sample_path, engine)
     if quality:
         voice = {**voice, "quality": quality}
+    if sample_path is not None:
+        try:
+            voice = {**voice, "profile": audio_utils.estimate_voice_profile(sample_path)}
+        except Exception as e:
+            print(f"[clone] perfil acústico falhou: {e}")
     return voice
 
 
@@ -280,6 +308,28 @@ async def get_upload(filename: str):
         raise HTTPException(404, "Arquivo não encontrado")
     media = "audio/wav" if path.suffix == ".wav" else "application/octet-stream"
     return FileResponse(path, media_type=media, filename=path.name)
+
+
+@app.post("/api/voice-profile")
+async def voice_profile(file: UploadFile = File(...), denoise: bool = Form(True)):
+    """
+    Mede o perfil acústico de uma amostra (tom fundamental, energia, pausas)
+    sem criar uma voz. Serve para ajustar tom/velocidade da voz sintetizada.
+    """
+    if not file.filename:
+        raise HTTPException(400, "Envie um áudio ou vídeo")
+    ext = (Path(file.filename).suffix or ".wav").lower()
+    raw = UPLOADS_DIR / f"profile_{uuid.uuid4().hex[:6]}{ext}"
+    raw.write_bytes(await file.read())
+    prepared = UPLOADS_DIR / f"profile_{uuid.uuid4().hex[:6]}.wav"
+    try:
+        audio_utils.extract_voice(raw, prepared, denoise=denoise)
+    except Exception as e:
+        raise HTTPException(400, str(e))
+    profile = audio_utils.estimate_voice_profile(prepared)
+    profile["quality"] = audio_utils.analyze_wav(prepared)
+    profile["download_url"] = f"/api/uploads/{prepared.name}"
+    return profile
 
 
 @app.post("/api/voices/design")
@@ -629,11 +679,12 @@ if frontend_dir.exists():
         app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
     except Exception as e:
         print(f"[frontend] mount /frontend falhou: {e}")
-    # Montado por último: rotas de API declaradas acima têm precedência
+    # Montado por último: rotas de API e "/" declaradas acima têm precedência.
+    # /assets serve arquivos estáticos extras do frontend.
     try:
-        app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="app")
+        app.mount("/assets", StaticFiles(directory=str(frontend_dir)), name="assets")
     except Exception as e:
-        print(f"[frontend] mount / falhou: {e}")
+        print(f"[frontend] mount /assets falhou: {e}")
 
 # ── Run helper ──
 if __name__ == "__main__":

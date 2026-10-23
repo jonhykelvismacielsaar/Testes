@@ -49,6 +49,9 @@ async def synthesize(text: str, voice: str, engine_id: str = "arena-tts", rate: 
             raise RuntimeError("Falha na síntese — nenhum arquivo gerado")
 
     duration = estimate_duration(text)
+    peak, real_duration, silent = _inspect_audio(output_path)
+    if real_duration:
+        duration = real_duration
     entry = {
         "id": audio_id,
         "text": text,
@@ -58,13 +61,35 @@ async def synthesize(text: str, voice: str, engine_id: str = "arena-tts", rate: 
         "path": str(output_path),
         "duration": duration,
         "created_at": datetime.utcnow().isoformat(),
-        "chars": len(text)
+        "chars": len(text),
+        "silent": silent,
+        "peak": peak,
+        "warning": ("O motor não conseguiu gerar voz (sem acesso à internet). "
+                    "Use a voz do seu dispositivo no navegador ou o modo Arena."
+                    if silent else None),
     }
     hist = _load_history()
     hist.insert(0, entry)
     hist = hist[:100]  # manter 100 últimas
     _save_history(hist)
     return entry
+
+def _inspect_audio(path: Path) -> tuple[int, float, bool]:
+    """Retorna (pico, duração real, é_silencioso) do WAV gerado."""
+    try:
+        import wave, array
+        with wave.open(str(path), "rb") as wf:
+            sr, n = wf.getframerate(), wf.getnframes()
+            raw = wf.readframes(min(n, sr * 60))
+        if not raw:
+            return 0, 0.0, True
+        samples = array.array("h")
+        samples.frombytes(raw[: len(raw) - (len(raw) % 2)])
+        peak = max((abs(min(samples)), abs(max(samples)))) if samples else 0
+        return peak, round(n / sr, 2) if sr else 0.0, peak < 60
+    except Exception:
+        return 0, 0.0, False
+
 
 def estimate_duration(text: str) -> float:
     # ~14 chars/sec média

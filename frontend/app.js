@@ -295,7 +295,7 @@ document.getElementById("btnDictStart")?.addEventListener("click", async ()=>{
   document.getElementById("dictLive").textContent="Conectando...";
   const proto=location.protocol==="https:"?"wss":"ws";
   wsDict=new WebSocket(`${proto}://${location.host}/v1/audio/transcriptions/stream`);
-  wsDict.onopen=()=>{ document.getElementById("dictLive").textContent="Ouvindo... fale agora.";
+  wsDict.onopen=async ()=>{ document.getElementById("dictLive").textContent="Ouvindo... fale agora.";
     // Tentar mic
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});

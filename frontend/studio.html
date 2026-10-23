@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceStudio Arena — Estúdio de Voz</title>
+<style>
+  :root{
+    --bg:#080a10; --bg2:#0d111a; --card:#121826; --card2:#171f30;
+    --line:rgba(255,255,255,.08); --txt:#e9eefb; --muted:#8c96ab;
+    --accent:#7c5cff; --accent2:#22d3ee; --ok:#34d399; --warn:#fbbf24; --err:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(900px 500px at 12% -8%, rgba(124,92,255,.22), transparent 60%),
+      radial-gradient(800px 500px at 92% 4%, rgba(34,211,238,.16), transparent 60%),
+      var(--bg);
+    color:var(--txt); line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent2);text-decoration:none}
+  .wrap{max-width:1020px;margin:0 auto;padding:26px 18px 70px}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+  .logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(124,92,255,.35)}
+  .brand h1{font-size:19px;font-weight:800;letter-spacing:-.2px}
+  .brand p{font-size:12px;color:var(--muted)}
+  .status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+    background:rgba(255,255,255,.04);border:1px solid var(--line);padding:7px 12px;border-radius:999px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px currentColor}
+  .dot.on{background:var(--ok)} .dot.off{background:var(--err)}
+
+  .hero{margin-bottom:24px}
+  .hero h2{font-size:clamp(24px,4.4vw,36px);line-height:1.15;letter-spacing:-.7px;font-weight:800}
+  .hero h2 span{background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);margin-top:9px;font-size:14px;max-width:640px}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);
+    border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+  .step{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .num{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#080a10}
+  .step h3{font-size:15px;font-weight:800;letter-spacing:.1px}
+  .step small{margin-left:auto;font-size:11px;color:var(--muted)}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border:0;cursor:pointer;font-weight:700;font-size:13.5px;border-radius:13px;padding:12px 18px;
+    display:inline-flex;align-items:center;gap:8px;transition:transform .12s ease,filter .12s ease,background .12s;
+    background:rgba(255,255,255,.06);color:var(--txt);border:1px solid var(--line)}
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.12)}
+  .btn:active{transform:translateY(0)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#5b7cff);border-color:transparent;
+    box-shadow:0 12px 30px rgba(124,92,255,.35);color:#fff}
+  .btn.cyan{background:linear-gradient(135deg,#0ea5b7,var(--accent2));border-color:transparent;color:#04141a}
+  .btn.ghost{background:transparent}
+  .btn.rec{background:linear-gradient(135deg,#ef4444,#f97316);border-color:transparent;color:#fff}
+  .btn.wide{width:100%;justify-content:center}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+  .drop{border:1.5px dashed rgba(255,255,255,.16);border-radius:16px;padding:18px;text-align:center;
+    color:var(--muted);font-size:12.5px;background:rgba(255,255,255,.02);cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:rgba(124,92,255,.08);color:var(--txt)}
+
+  textarea,input[type=text],select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);
+    color:var(--txt);border-radius:13px;padding:12px 14px;font-size:14px;font-family:inherit;outline:none;transition:.15s}
+  textarea:focus,input[type=text]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+  textarea{min-height:118px;resize:vertical;line-height:1.6}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:36px}
+  label.lbl{display:block;font-size:11.5px;color:var(--muted);margin:12px 0 6px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+
+  .meter{display:flex;gap:3px;align-items:flex-end;height:34px;margin-top:12px}
+  .meter i{flex:1;background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:3px;height:6%;transition:height .08s linear}
+
+  .player{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.3);border:1px solid var(--line);
+    border-radius:14px;padding:12px;margin-top:12px}
+  .player audio{flex:1;height:36px;min-width:0}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-top:12px}
+  .metric{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:9px 10px}
+  .metric b{display:block;font-size:15px}
+  .metric span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+  .note{font-size:12.5px;border-radius:12px;padding:11px 13px;margin-top:12px;border:1px solid transparent;display:none}
+  .note.show{display:block}
+  .note.info{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3);color:#bfdbfe}
+  .note.ok{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:#bbf7d0}
+  .note.warn{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:#fde68a}
+  .note.err{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#fecaca}
+
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-size:12px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);cursor:pointer;color:var(--muted);transition:.15s}
+  .chip:hover{color:var(--txt);border-color:var(--accent);background:rgba(124,92,255,.12)}
+
+  .voices{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:250px;overflow:auto}
+  .voice{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:12px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line)}
+  .avatar{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:13px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0d14}
+  .voice div{min-width:0;flex:1}
+  .voice b{font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .voice small{font-size:11px;color:var(--muted)}
+  .mini{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);border-radius:9px;
+    width:30px;height:30px;display:grid;place-items:center;cursor:pointer;font-size:11px}
+  .mini:hover{background:var(--accent);border-color:var(--accent)}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:820px){.split{grid-template-columns:1fr}}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .kbd{font-family:ui-monospace,Consolas,monospace;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:11px}
+  footer{margin-top:30px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.8}
+  .hidden{display:none !important}
+  .tabs{display:flex;gap:6px;background:rgba(0,0,0,.3);padding:5px;border-radius:13px;margin-bottom:12px;border:1px solid var(--line)}
+  .tab{flex:1;padding:9px;text-align:center;border-radius:9px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;border:0;background:transparent}
+  .tab.active{background:linear-gradient(135deg,var(--accent),#5b7cff);color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">🎙️</div>
+    <div class="brand">
+      <h1>VoiceStudio Arena</h1>
+      <p>Grave sua voz · escreva o texto · ouça falando</p>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">conectando…</span>
+      <a href="#" id="openTab" style="margin-left:6px;font-weight:700">abrir em nova aba ↗</a></div>
+  </header>
+
+  <div class="hero">
+    <h2>Use <span>sua voz</span> para falar qualquer texto</h2>
+    <p>Não precisa anexar nada no chat: grave pelo microfone ou escolha um áudio/vídeo direto do seu aparelho.
+       O estúdio limpa a amostra, mede o seu tom e fala o texto que você escrever.</p>
+  </div>
+
+  <!-- PASSO 1 -->
+  <section class="card">
+    <div class="step"><div class="num">1</div><h3>Sua voz</h3><small id="voiceState">nenhuma amostra ainda</small></div>
+
+    <div class="tabs">
+      <button class="tab active" data-pane="mic">🎤 Gravar pelo microfone</button>
+      <button class="tab" data-pane="file">📁 Escolher arquivo do aparelho</button>
+    </div>
+
+    <!-- Pane microfone -->
+    <div id="pane-mic">
+      <div class="row">
+        <button class="btn rec" id="btnRec">● Gravar</button>
+        <button class="btn ghost" id="btnStop" disabled>■ Parar</button>
+        <span class="hint" id="recHint" style="align-self:center">Fale 15 a 30 segundos, em lugar silencioso.</span>
+      </div>
+      <div class="meter" id="meter"></div>
+    </div>
+
+    <!-- Pane arquivo -->
+    <div id="pane-file" class="hidden">
+      <div class="drop" id="drop">
+        <div style="font-size:24px;margin-bottom:6px">📁</div>
+        Clique aqui ou arraste um <b>áudio</b> ou <b>vídeo</b><br>
+        <span style="font-size:11.5px">mp3, wav, m4a, ogg, opus, mp4, mov, webm — até 200 MB</span>
+      </div>
+      <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.opus,.flac,.aac,.mp4,.mov,.webm,.mkv" class="hidden">
+      <p class="hint">Se for vídeo, a voz é extraída automaticamente: ruído removido e volume normalizado.</p>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <input type="text" id="voiceName" placeholder="Nome da sua voz (ex: Minha voz)" style="flex:1;min-width:180px" value="Minha voz">
+      <select id="voiceLang" style="width:130px">
+        <option value="pt-BR">pt-BR</option><option value="en-US">en-US</option>
+        <option value="es-ES">es-ES</option><option value="fr-FR">fr-FR</option>
+        <option value="it-IT">it-IT</option><option value="de-DE">de-DE</option>
+        <option value="ja-JP">ja-JP</option><option value="zh-CN">zh-CN</option>
+      </select>
+      <button class="btn primary" id="btnSaveVoice" disabled>💾 Salvar minha voz</button>
+    </div>
+
+    <div class="note" id="sampleNote"></div>
+
+    <div id="sampleBox" class="hidden">
+      <div class="player">
+        <audio id="sampleAudio" controls preload="metadata"></audio>
+      </div>
+      <div class="metrics" id="metrics"></div>
+    </div>
+  </section>
+
+  <!-- PASSO 2 -->
+  <section class="card">
+    <div class="step"><div class="num">2</div><h3>O que você quer falar</h3><small id="charCount">0 caracteres</small></div>
+    <textarea id="text" placeholder="Escreva aqui o texto que a voz vai falar…"></textarea>
+    <div class="chips" id="presets">
+      <button class="chip" data-t="Olá! Este é um teste da minha voz no VoiceStudio Arena. Está funcionando perfeitamente!">👋 Teste rápido</button>
+      <button class="chip" data-t="Bem-vindos ao meu canal! Hoje eu vou te mostrar três dicas que vão mudar a forma como você trabalha todos os dias.">🎬 Abertura de vídeo</button>
+      <button class="chip" data-t="Era uma vez um reino distante, onde uma voz podia contar histórias que faziam todo mundo sonhar.">📚 Narração de história</button>
+      <button class="chip" data-t="Atenção, passageiros: o voo 452 para São Paulo está embarcando no portão sete.">📢 Anúncio</button>
+    </div>
+  </section>
+
+  <!-- PASSO 3 -->
+  <section class="card">
+    <div class="step"><div class="num">3</div><h3>Ouvir falando</h3><small>o áudio toca na hora, no seu navegador</small></div>
+
+    <button class="btn primary wide" id="btnSpeak" style="font-size:15px;padding:15px">▶ Falar agora</button>
+
+    <div class="split" style="margin-top:14px">
+      <div>
+        <label class="lbl">Voz do dispositivo</label>
+        <select id="sysVoice"><option>carregando vozes…</option></select>
+      </div>
+      <div>
+        <label class="lbl">Ajustes</label>
+        <div class="row">
+          <label style="flex:1;font-size:11.5px;color:var(--muted)">Tom <b id="pitchVal">1.00</b>
+            <input type="range" id="pitch" min="0.5" max="1.8" step="0.05" value="1" style="width:100%">
+          </label>
+          <label style="flex:1;font-size:11.5px;color:var(--muted)">Velocidade <b id="rateVal">1.00</b>
+            <input type="range" id="rate" min="0.5" max="1.8" step="0.05" value="1" style="width:100%">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" id="btnApplyProfile" disabled>🎯 Usar o tom da minha voz</button>
+      <button class="btn" id="btnServer">⬇ Gerar arquivo de áudio</button>
+      <button class="btn ghost" id="btnCopy">💬 Pedir versão premium no chat</button>
+    </div>
+
+    <div class="note" id="speakNote"></div>
+
+    <div id="serverBox" class="hidden">
+      <div class="player">
+        <audio id="serverAudio" controls></audio>
+        <a class="btn mini" id="btnDownload" style="width:auto;padding:0 12px;height:34px" download>⤓ Baixar</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vozes -->
+  <section class="card">
+    <div class="step"><div class="num">★</div><h3>Minhas vozes</h3><small id="voicesCount"></small></div>
+    <div class="voices" id="voicesList"></div>
+    <p class="hint">Clique em ▶ para ouvir uma amostra. Para usar uma voz na fala, escolha acima em “Voz do dispositivo”.</p>
+  </section>
+
+  <!-- Ajuda -->
+  <section class="card">
+    <div class="step"><div class="num">?</div><h3>Como funciona (e o que é possível)</h3></div>
+    <div style="font-size:13px;color:var(--muted);display:grid;gap:10px">
+      <p><b style="color:var(--txt)">1. Amostra:</b> grave 15–30s falando ou envie um áudio/vídeo do aparelho. O servidor extrai a voz, remove ruído e normaliza o volume.</p>
+      <p><b style="color:var(--txt)">2. Medição:</b> a amostra é analisada (tom fundamental, energia, pausas) e o estúdio sugere tom e velocidade para a voz sintética ficar mais parecida com a sua.</p>
+      <p><b style="color:var(--txt)">3. Fala:</b> o texto é falado na hora com as vozes neurais do seu aparelho — funciona até sem internet.</p>
+      <p><b style="color:var(--txt)">4. Arquivo:</b> “Gerar arquivo de áudio” tenta os motores do servidor (Edge-TTS/Arena). Se o servidor estiver sem saída para a internet, o botão avisa em vez de entregar um arquivo silencioso.</p>
+      <p style="color:var(--warn)"><b>Transparência:</b> clonagem neural zero-shot (OmniVoice, 2.4 GB, precisa de GPU) não roda neste ambiente. Aqui o ajuste é acústico (tom/velocidade), não uma cópia do timbre. Para clonagem neural real, rode o VoiceStudio original localmente — veja <span class="kbd">docs/ARENA.md</span>.</p>
+    </div>
+  </section>
+
+  <footer>
+    VoiceStudio Arena · clone funcional do <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash/VoiceStudio</a> (AGPL-3.0)<br>
+    <a href="/classic">Abrir a versão completa (7 abas)</a> · <a href="/docs" target="_blank">API Docs</a> · <a href="/api/health" target="_blank">Status</a>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var S = {
+    sampleBlob: null, sampleName: "", profile: null, myVoice: null,
+    recorder: null, chunks: [], stream: null, timer: null, secs: 0,
+    audioCtx: null, analyser: null, raf: null, sysVoices: []
+  };
+  function $(id){ return document.getElementById(id); }
+  function note(el, msg, kind){
+    var n = typeof el === "string" ? $(el) : el;
+    if(!n) return;
+    n.className = "note show " + (kind || "info");
+    n.innerHTML = msg;
+  }
+  function hideNote(el){ var n = typeof el === "string" ? $(el) : el; if(n) n.className = "note"; }
+
+  $("openTab").addEventListener("click", function(e){
+    e.preventDefault();
+    window.open(location.href, "_blank", "noopener");
+  });
+
+  // ---------- status ----------
+  fetch("/api/health").then(function(r){ return r.json(); }).then(function(h){
+    $("dot").className = "dot on";
+    $("statusTxt").textContent = "online · v" + h.version;
+  }).catch(function(){
+    $("dot").className = "dot off";
+    $("statusTxt").textContent = "API offline";
+  });
+
+  // ---------- abas ----------
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(t){
+    t.addEventListener("click", function(){
+      Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      $("pane-mic").classList.toggle("hidden", t.dataset.pane !== "mic");
+      $("pane-file").classList.toggle("hidden", t.dataset.pane !== "file");
+    });
+  });
+
+  // ---------- medidor ----------
+  var meter = $("meter");
+  for(var i=0;i<28;i++){ meter.appendChild(document.createElement("i")); }
+  var bars = meter.querySelectorAll("i");
+
+  function startMeter(stream){
+    try{
+      S.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var src = S.audioCtx.createMediaStreamSource(stream);
+      S.analyser = S.audioCtx.createAnalyser();
+      S.analyser.fftSize = 64;
+      src.connect(S.analyser);
+      var data = new Uint8Array(S.analyser.frequencyBinCount);
+      (function loop(){
+        S.analyser.getByteFrequencyData(data);
+        for(var i=0;i<bars.length;i++){
+          var v = data[i % data.length] || 0;
+          bars[i].style.height = Math.max(6, Math.min(100, v)) + "%";
+        }
+        S.raf = requestAnimationFrame(loop);
+      })();
+    }catch(e){ /* sem visualização, segue gravando */ }
+  }
+  function stopMeter(){
+    if(S.raf) cancelAnimationFrame(S.raf), S.raf = null;
+    if(S.audioCtx){ try{ S.audioCtx.close(); }catch(e){} S.audioCtx = null; }
+    Array.prototype.forEach.call(bars, function(b){ b.style.height = "6%"; });
+  }
+
+  // ---------- gravação ----------
+  $("btnRec").addEventListener("click", function(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      note("sampleNote", "Seu navegador não expõe o microfone aqui. Use a aba <b>Escolher arquivo do aparelho</b>.", "warn");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      .then(function(stream){
+        S.stream = stream;
+        S.chunks = [];
+        S.recorder = new MediaRecorder(stream);
+        S.recorder.ondataavailable = function(e){ if(e.data && e.data.size) S.chunks.push(e.data); };
+        S.recorder.onstop = function(){ finishRecording(); };
+        S.recorder.start();
+        $("btnRec").disabled = true;
+        $("btnStop").disabled = false;
+        $("recHint").textContent = "Gravando… 0s";
+        S.secs = 0;
+        S.timer = setInterval(function(){
+          S.secs++;
+          $("recHint").textContent = "Gravando… " + S.secs + "s" + (S.secs >= 30 ? " (pode parar)" : "");
+          if(S.secs >= 60) stopRecording();
+        }, 1000);
+        startMeter(stream);
+        hideNote("sampleNote");
+      })
+      .catch(function(err){
+        var msg = "Microfone bloqueado (" + err.name + "). ";
+        if(err.name === "NotAllowedError" || err.name === "SecurityError"){
+          msg += "A prévia roda dentro de um quadro e pode negar o microfone. " +
+                 "<a href='" + location.href + "' target='_blank' rel='noopener'>Abra em nova aba</a> e tente de novo, " +
+                 "ou use a aba <b>Escolher arquivo do aparelho</b>.";
+        }else if(err.name === "NotFoundError"){
+          msg += "Nenhum microfone encontrado. Use a aba <b>Escolher arquivo do aparelho</b>.";
+        }else{
+          msg += "Use a aba <b>Escolher arquivo do aparelho</b>.";
+        }
+        note("sampleNote", msg, "warn");
+      });
+  });
+
+  function stopRecording(){ if(S.recorder && S.recorder.state !== "inactive") S.recorder.stop(); }
+
+  $("btnStop").addEventListener("click", stopRecording);
+
+  function finishRecording(){
+    clearInterval(S.timer);
+    $("btnRec").disabled = false;
+    $("btnStop").disabled = true;
+    $("recHint").textContent = "Gravação concluída (" + S.secs + "s).";
+    stopMeter();
+    if(S.stream){ S.stream.getTracks().forEach(function(t){ t.stop(); }); S.stream = null; }
+    if(!S.chunks.length){ note("sampleNote", "Nada foi gravado. Tente novamente.", "err"); return; }
+    var blob = new Blob(S.chunks, { type: S.chunks[0].type || "audio/webm" });
+    if(blob.size < 2000){
+      note("sampleNote", "Gravação muito curta. Grave pelo menos 5 segundos falando.", "warn");
+      return;
+    }
+    onSampleReady(blob, "gravacao." + (blob.type.indexOf("webm") >= 0 ? "webm" : "ogg"));
+  }
+
+  // ---------- arquivo ----------
+  var drop = $("drop"), fileInput = $("fileInput");
+  drop.addEventListener("click", function(){ fileInput.click(); });
+  drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", function(){ drop.classList.remove("over"); });
+  drop.addEventListener("drop", function(e){
+    e.preventDefault(); drop.classList.remove("over");
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener("change", function(e){
+    if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file){
+    if(!file) return;
+    if(file.size > 200 * 1024 * 1024){ note("sampleNote", "Arquivo muito grande (máx 200 MB).", "err"); return; }
+    onSampleReady(file, file.name);
+    document.querySelector('.tab[data-pane="file"]').click();
+  }
+
+  // ---------- amostra pronta ----------
+  function onSampleReady(blob, filename){
+    S.sampleBlob = blob;
+    S.sampleName = filename || "amostra";
+    $("sampleBox").classList.remove("hidden");
+    var url = URL.createObjectURL(blob);
+    $("sampleAudio").src = url;
+    $("btnSaveVoice").disabled = false;
+    $("voiceState").textContent = "pronta para salvar";
+    note("sampleNote", "Amostra carregada. Clique em <b>💾 Salvar minha voz</b> — vou extrair a voz, limpar o ruído e medir o seu tom.", "info");
+    uploadSample(true);
+  }
+
+  // upload + análise (cria a voz no servidor)
+  function uploadSample(silent){
+    if(!S.sampleBlob) return Promise.resolve(null);
+    var fd = new FormData();
+    fd.append("name", $("voiceName").value || "Minha voz");
+    fd.append("language", $("voiceLang").value);
+    fd.append("gender", "neutral");
+    fd.append("duration", "30");
+    fd.append("sample", S.sampleBlob, S.sampleName);
+    $("btnSaveVoice").disabled = true;
+    $("btnSaveVoice").textContent = "⏳ Processando…";
+    return fetch("/api/voices/clone", { method: "POST", body: fd })
+      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
+      .then(function(res){
+        if(!res.ok) throw new Error((res.body && (res.body.detail || res.body.error)) || "falha ao processar");
+        var v = res.body;
+        S.myVoice = v;
+        S.profile = v.profile || null;
+        renderMetrics(v.quality);
+        if(S.profile && S.profile.f0_median){
+          note("sampleNote",
+            "✅ Voz <b>" + v.name + "</b> salva. Tom medido: <b>" + S.profile.f0_median + " Hz</b>" +
+            " (" + (S.profile.gender_hint === "masculine" ? "grave/masculina" : S.profile.gender_hint === "feminine" ? "aguda/feminina" : "neutra") + "). " +
+            "Use <b>🎯 Usar o tom da minha voz</b> para ajustar a fala.", "ok");
+          $("btnApplyProfile").disabled = false;
+        }else{
+          note("sampleNote", "✅ Voz <b>" + v.name + "</b> salva.", "ok");
+        }
+        $("voiceState").textContent = "voz salva: " + v.name;
+        $("btnSaveVoice").textContent = "💾 Salvar minha voz";
+        $("btnSaveVoice").disabled = false;
+        loadVoices();
+        return v;
+      })
+      .catch(function(err){
+        $("btnSaveVoice").textContent = "💾 Salvar minha voz";
+        $("btnSaveVoice").disabled = false;
+        if(!silent) note("sampleNote", "Não consegui processar: " + err.message, "err");
+        else note("sampleNote", "Amostra carregada, mas o processamento falhou: " + err.message +
+          "<br>Você ainda pode falar usando a voz do dispositivo.", "warn");
+        return null;
+      });
+  }
+
+  function renderMetrics(q){
+    if(!q) return;
+    var el = $("metrics");
+    el.innerHTML =
+      m(q.duration ? q.duration.toFixed(1) : "—", "duração (s)") +
+      m(q.peak_db != null ? q.peak_db + " dB" : "—", "pico") +
+      m(q.rms_db != null ? q.rms_db + " dB" : "—", "volume médio") +
+      m(q.sample_rate ? (q.sample_rate/1000).toFixed(1) + " kHz" : "—", "taxa") +
+      (S.profile && S.profile.f0_median ? m(Math.round(S.profile.f0_median) + " Hz", "seu tom") : "");
+    if(q.warnings && q.warnings.length){
+      note("sampleNote", "⚠️ " + q.warnings.join("<br>⚠️ "), "warn");
+    }
+  }
+  function m(v, l){ return '<div class="metric"><b>' + v + '</b><span>' + l + '</span></div>'; }
+
+  $("btnSaveVoice").addEventListener("click", function(){ uploadSample(false); });
+
+  // ---------- texto ----------
+  var textEl = $("text");
+  function updateCount(){ $("charCount").textContent = textEl.value.length + " caracteres"; }
+  textEl.addEventListener("input", updateCount);
+  Array.prototype.forEach.call(document.querySelectorAll("#presets .chip"), function(c){
+    c.addEventListener("click", function(){ textEl.value = c.dataset.t; updateCount(); textEl.focus(); });
+  });
+  textEl.value = "Olá! Esta é a minha voz falando no VoiceStudio Arena. Escreva qualquer texto e eu falo para você.";
+  updateCount();
+
+  // ---------- vozes do sistema ----------
+  function loadSysVoices(){
+    if(!("speechSynthesis" in window)) {
+      $("sysVoice").innerHTML = '<option>Navegador sem síntese de voz</option>';
+      note("speakNote", "Seu navegador não tem vozes de sistema. Você ainda pode gerar o arquivo pelo servidor.", "warn");
+      return;
+    }
+    var all = window.speechSynthesis.getVoices();
+    S.sysVoices = all;
+    var sel = $("sysVoice");
+    if(!all.length){ sel.innerHTML = '<option>carregando vozes…</option>'; return; }
+    var lang = $("voiceLang").value.split("-")[0].toLowerCase();
+    var pref = all.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(lang) === 0; });
+    var rest = all.filter(function(v){ return pref.indexOf(v) < 0; });
+    var list = pref.concat(rest);
+    sel.innerHTML = list.map(function(v, i){
+      var nm = v.name + " (" + v.lang + ")" + (v.localService ? "" : " ☁");
+      return '<option value="' + S.sysVoices.indexOf(v) + '">' + nm.replace(/</g,"&lt;") + '</option>';
+    }).join("");
+    // preferir voz local do idioma escolhido
+    var best = 0;
+    for(var i=0;i<list.length;i++){ if(list[i].lang && list[i].lang.toLowerCase().indexOf(lang)===0 && list[i].localService){ best = i; break; } }
+    sel.selectedIndex = best;
+  }
+  if("speechSynthesis" in window){
+    loadSysVoices();
+    window.speechSynthesis.onvoiceschanged = loadSysVoices;
+    setTimeout(loadSysVoices, 700);
+  }
+  $("voiceLang").addEventListener("change", function(){ setTimeout(loadSysVoices, 60); });
+
+  // sliders
+  function syncSliders(){
+    $("pitchVal").textContent = Number($("pitch").value).toFixed(2);
+    $("rateVal").textContent = Number($("rate").value).toFixed(2);
+  }
+  $("pitch").addEventListener("input", syncSliders);
+  $("rate").addEventListener("input", syncSliders);
+  syncSliders();
+
+  $("btnApplyProfile").addEventListener("click", function(){
+    if(!S.profile) { note("speakNote", "Salve uma amostra primeiro.", "warn"); return; }
+    if(S.profile.suggested_pitch) $("pitch").value = S.profile.suggested_pitch;
+    if(S.profile.suggested_rate) $("rate").value = S.profile.suggested_rate;
+    syncSliders();
+    note("speakNote", "Tom " + $("pitch").value + " e velocidade " + $("rate").value +
+      " aplicados a partir da sua amostra (medição acústica, não clonagem neural).", "ok");
+  });
+
+  // ---------- falar ----------
+  function speakWithDevice(){
+    var txt = textEl.value.trim();
+    if(!txt){ note("speakNote", "Escreva o texto primeiro.", "warn"); textEl.focus(); return false; }
+    if(!("speechSynthesis" in window)){ note("speakNote", "Este navegador não suporta fala. Gere o arquivo pelo servidor.", "err"); return false; }
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    var u = new SpeechSynthesisUtterance(txt);
+    var idx = parseInt($("sysVoice").value, 10);
+    if(!isNaN(idx) && S.sysVoices[idx]) u.voice = S.sysVoices[idx];
+    u.lang = $("voiceLang").value;
+    u.rate = Number($("rate").value);
+    u.pitch = Number($("pitch").value);
+    u.onstart = function(){ note("speakNote", "🔊 Falando…", "ok"); };
+    u.onend = function(){ note("speakNote", "✅ Terminou.", "ok"); };
+    u.onerror = function(e){
+      if(e.error === "not-allowed" || e.error === "interrupted") return;
+      note("speakNote", "Não foi possível falar (" + e.error + "). Tente outro navegador.", "err");
+    };
+    window.speechSynthesis.speak(u);
+    return true;
+  }
+
+  $("btnSpeak").addEventListener("click", function(){ speakWithDevice(); });
+
+  // ---------- servidor ----------
+  $("btnServer").addEventListener("click", function(){
+    var txt = textEl.value.trim();
+    if(!txt){ note("speakNote", "Escreva o texto primeiro.", "warn"); return; }
+    var btn = $("btnServer");
+    btn.disabled = true; btn.textContent = "⏳ gerando…";
+    hideNote("speakNote");
+    fetch("/api/generate", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: txt, voice: "pt-BR-FranciscaNeural", engine: "arena-tts" })
+    })
+    .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
+    .then(function(res){
+      if(!res.ok) throw new Error((res.body && res.body.detail) || "erro do servidor");
+      var d = res.body;
+      if(d.silent){
+        note("speakNote", "⚠️ " + (d.warning || "O motor do servidor não conseguiu gerar voz.") +
+          "<br>Toquei o texto com a <b>voz do seu dispositivo</b> em vez disso.", "warn");
+        $("serverBox").classList.add("hidden");
+        speakWithDevice();   // garante que sempre sai som
+        return;
+      }
+      $("serverBox").classList.remove("hidden");
+      $("serverAudio").src = "/api/audio/" + d.id + "?t=" + Date.now();
+      $("btnDownload").href = "/api/audio/" + d.id;
+      $("btnDownload").setAttribute("download", d.file || (d.id + ".wav"));
+      note("speakNote", "✅ Arquivo gerado (" + d.duration + "s, motor " + d.engine + ").", "ok");
+    })
+    .catch(function(err){
+      note("speakNote", "O servidor falhou: " + err.message +
+        "<br>Use <b>▶ Falar agora</b> — funciona no seu navegador, sem depender do servidor.", "err");
+    })
+    .then(function(){ btn.disabled = false; btn.textContent = "⬇ Gerar arquivo de áudio"; });
+  });
+
+  // ---------- copiar pedido pro chat ----------
+  $("btnCopy").addEventListener("click", function(){
+    var txt = textEl.value.trim() || "(escreva o texto)";
+    var p = "Gere uma narração premium com a sua voz nativa (generate_speech) falando exatamente:\n\n" +
+            '"' + txt + '"\n\n' +
+            "Tom sugerido: pitch " + $("pitch").value + ", velocidade " + $("rate").value + ". " +
+            "Idioma: " + $("voiceLang").value + ". Salve em data/outputs/ e me mande o áudio.";
+    var done = function(){ note("speakNote", "📋 Pedido copiado. Cole no chat do Arena para receber o áudio premium.", "ok"); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(p).then(done).catch(function(){ fallbackCopy(p, done); });
+    } else { fallbackCopy(p, done); }
+  });
+  function fallbackCopy(t, cb){
+    var ta = document.createElement("textarea");
+    ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); cb(); }catch(e){ note("speakNote", "Não foi possível copiar automaticamente.", "warn"); }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- vozes salvas ----------
+  function loadVoices(){
+    fetch("/api/voices").then(function(r){ return r.json(); }).then(function(list){
+      var el = $("voicesList");
+      $("voicesCount").textContent = list.length + " vozes";
+      el.innerHTML = list.map(function(v){
+        var initial = (v.name || "?").charAt(0).toUpperCase();
+        var tag = v.cloned ? "clonada" : (v.designed ? "desenhada" : "demo");
+        return '<div class="voice">' +
+          '<div class="avatar">' + initial + '</div>' +
+          '<div><b>' + (v.name || v.id) + '</b><small>' + (v.lang || "") + ' · ' + tag + ' · ' + (v.engine || "") + '</small></div>' +
+          '<button class="mini" data-id="' + v.id + '" title="Ouvir amostra">▶</button>' +
+        '</div>';
+      }).join("");
+      Array.prototype.forEach.call(el.querySelectorAll(".mini"), function(b){
+        b.addEventListener("click", function(){ previewVoice(b.dataset.id, b); });
+      });
+    }).catch(function(){
+      $("voicesList").innerHTML = '<div class="hint">Não foi possível carregar as vozes.</div>';
+    });
+  }
+
+  function previewVoice(id, btn){
+    btn.textContent = "…";
+    fetch("/api/generate", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Olá! Esta é uma amostra da voz " + id + ".", voice: id, engine: "arena-tts" })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      btn.textContent = "▶";
+      if(d.silent){ note("speakNote", "Esta voz é uma demonstração; o motor do servidor está sem acesso à internet. Use a voz do dispositivo.", "warn"); return; }
+      var a = new Audio("/api/audio/" + d.id);
+      a.play().catch(function(){});
+    }).catch(function(){ btn.textContent = "▶"; });
+  }
+
+  loadVoices();
+})();
+</script>
+</body>
+</html>

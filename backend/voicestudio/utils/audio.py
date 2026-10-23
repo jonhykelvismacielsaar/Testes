@@ -275,3 +275,123 @@ def is_supported_media(path: str | Path) -> bool:
 
 def to_json(obj) -> str:
     return json.dumps(obj, ensure_ascii=False, indent=2)
+
+# --------------------------------------------------------------------------- #
+# Perfil de voz (F0 / ritmo) — usado para casar o tom da voz sintetizada
+# --------------------------------------------------------------------------- #
+def estimate_voice_profile(path: str | Path) -> dict:
+    """
+    Estima características da voz de uma amostra: F0 (tom fundamental) mediana,
+    faixa de F0, energia e velocidade de fala aproximada.
+
+    Não é clonagem neural — é uma medição acústica usada para ajustar tom e
+    velocidade de uma voz sintética (pitch/rate).
+    """
+    path = Path(path)
+    out = {
+        "path": str(path),
+        "f0_median": None,
+        "f0_min": None,
+        "f0_max": None,
+        "f0_range_semitones": None,
+        "suggested_pitch": 1.0,
+        "suggested_rate": 1.0,
+        "gender_hint": None,
+        "duration": 0.0,
+        "voiced_ratio": 0.0,
+        "note": "Medição acústica — não é clonagem neural.",
+    }
+    try:
+        import numpy as np
+    except ImportError:
+        out["error"] = "numpy não instalado"
+        return out
+
+    tmp = Path(str(path)).with_suffix(".f0.wav")
+    try:
+        if path.suffix.lower() != ".wav" or True:
+            extract_voice(path, tmp, denoise=True, normalize=False, target_sr=16000)
+            work = tmp
+        else:
+            work = path
+        with wave.open(str(work), "rb") as wf:
+            sr = wf.getframerate()
+            n = wf.getnframes()
+            raw = wf.readframes(n)
+        if not raw:
+            raise ValueError("áudio vazio")
+        samples = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+        out["duration"] = round(len(samples) / sr, 2)
+
+        frame = int(0.04 * sr)      # 40 ms
+        hop = int(0.02 * sr)        # 20 ms
+        f0s: list[float] = []
+        energy: list[float] = []
+        for start in range(0, max(0, len(samples) - frame), hop):
+            chunk = samples[start:start + frame]
+            rms = float(np.sqrt(np.mean(chunk ** 2)))
+            energy.append(rms)
+            if rms < 0.01:            # silêncio
+                continue
+            chunk = chunk - np.mean(chunk)
+            corr = np.correlate(chunk, chunk, mode="full")[len(chunk) - 1:]
+            if corr[0] <= 1e-9:
+                continue
+            corr = corr / corr[0]
+            min_lag = int(sr / 400)   # 400 Hz
+            max_lag = int(sr / 60)    # 60 Hz
+            if max_lag >= len(corr):
+                continue
+            window = corr[min_lag:max_lag]
+            if len(window) == 0:
+                continue
+            peak_idx = int(np.argmax(window))
+            if window[peak_idx] < 0.35:   # pouca periodicidade -> sem voz
+                continue
+            f0s.append(sr / (min_lag + peak_idx))
+
+        if f0s:
+            arr = np.array(f0s)
+            med = float(np.median(arr))
+            p10, p90 = float(np.percentile(arr, 10)), float(np.percentile(arr, 90))
+            out.update({
+                "f0_median": round(med, 1),
+                "f0_min": round(p10, 1),
+                "f0_max": round(p90, 1),
+                "f0_range_semitones": round(12 * float(np.log2(max(p90, 1) / max(p10, 1))), 1),
+                "voiced_ratio": round(len(f0s) / max(1, len(energy)), 3),
+            })
+            # heurística: voz típica de referência ~ 165 Hz
+            ratio = med / 165.0
+            out["suggested_pitch"] = round(min(1.6, max(0.6, ratio ** 0.5)), 2)
+            out["gender_hint"] = "masculine" if med < 140 else "feminine" if med > 175 else "neutral"
+        # ritmo: pausas longas (>250ms de silêncio) por minuto
+        if energy:
+            e = np.array(energy)
+            thr = max(0.01, float(np.percentile(e, 30)) * 0.6)
+            sil = e < thr
+            runs, cur = [], 0
+            for v in sil:
+                if v:
+                    cur += 1
+                elif cur:
+                    runs.append(cur * (hop / sr)); cur = 0
+            if cur:
+                runs.append(cur * (hop / sr))
+            pauses = [r for r in runs if r > 0.25]
+            per_min = len(pauses) / max(0.1, out["duration"] / 60)
+            out["pauses_per_minute"] = round(per_min, 1)
+            if per_min > 22:
+                out["suggested_rate"] = 0.85
+            elif per_min < 8:
+                out["suggested_rate"] = 1.1
+        return out
+    except Exception as e:
+        out["error"] = str(e)
+        return out
+    finally:
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except OSError:
+            pass

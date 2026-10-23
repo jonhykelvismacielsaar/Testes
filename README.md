@@ -73,6 +73,18 @@ curl -X POST http://localhost:3900/api/voices/clone \
 A resposta inclui `quality` com duração, pico, RMS e avisos (amostra curta,
 ruidosa, baixa, saturada). Dica: grave 15–30s falando de frente, sem música.
 
+### 🌐 A interface principal: Estúdio de Voz
+
+Abra a raiz do servidor (`/`) — é uma página única, sem dependências externas:
+
+1. **Sua voz** — grave pelo microfone **ou** escolha um áudio/vídeo direto do
+   aparelho (não precisa anexar nada no chat).
+2. **O que falar** — escreva o texto.
+3. **Ouvir falando** — o áudio toca na hora com as vozes neurais do dispositivo;
+   “Gerar arquivo de áudio” tenta os motores do servidor e avisa se estiver offline.
+
+A versão completa com as 7 abas (clone do app original) fica em `/classic`.
+
 ### Opção 2 — Backend + Frontend local
 
 ```bash

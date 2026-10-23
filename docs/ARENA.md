@@ -202,3 +202,27 @@ pip install imageio-ffmpeg
 
 O módulo `backend/voicestudio/utils/audio.py` detecta `ffmpeg` no PATH e, se
 não houver, usa o binário embutido do `imageio-ffmpeg` automaticamente.
+
+
+## 8. Interface: `/` (Estúdio) e `/classic` (7 abas)
+
+| Rota | O que é |
+|---|---|
+| `/` | **Estúdio de Voz** — fluxo de 3 passos, sem CDN, funciona offline no navegador |
+| `/classic` | UI completa de 7 abas (clone do VoiceStudio original) |
+| `/docs` | Swagger da API |
+
+### Fluxo do Estúdio
+
+1. **Amostra** — microfone (`MediaRecorder`) ou arquivo do aparelho (`audio/*,video/*`).
+2. **Processamento** — `/api/voices/clone` extrai a voz do vídeo, aplica denoise +
+   loudnorm e devolve `quality` (duração/pico/RMS/avisos) e `profile`
+   (F0 mediana, faixa, pausas, pitch/rate sugeridos).
+3. **Fala** — `speechSynthesis` no navegador (sempre disponível), com botões para
+   gerar arquivo no servidor ou copiar o pedido para o chat do Arena.
+
+### Limite honesto
+
+O ajuste de tom/velocidade é **acústico**, não clonagem neural. Clonagem zero-shot
+real exige OmniVoice (2.4 GB, GPU) — fora do escopo deste sandbox. O endpoint
+`POST /api/voice-profile` mede a amostra para aproximar tom e ritmo.
