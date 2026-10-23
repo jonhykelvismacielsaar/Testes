@@ -46,6 +46,7 @@ from voicestudio.services import generation as gen_svc
 from voicestudio.services import transcription as trans_svc
 from voicestudio.services import dubbing as dub_svc
 from voicestudio.services import audiobook as ab_svc
+from voicestudio.utils import audio as audio_utils
 
 app = FastAPI(
     title=PRODUCT_NAME,
@@ -196,15 +197,90 @@ async def clone_voice(
     language: str = Form("pt-BR"),
     gender: str = Form("feminine"),
     engine: str = Form("arena-tts"),
+    start: float | None = Form(None),
+    duration: float | None = Form(None),
+    denoise: bool = Form(True),
     sample: UploadFile | None = File(None)
 ):
+    """
+    Clona uma voz a partir de áudio OU vídeo.
+
+    Se o arquivo for vídeo (mp4/mov/webm...), a faixa de voz é extraída,
+    limpa (denoise) e normalizada automaticamente antes de virar amostra.
+    """
     sample_path = None
+    quality = None
     if sample and sample.filename:
-        ext = Path(sample.filename).suffix or ".wav"
-        sample_path = UPLOADS_DIR / f"sample_{uuid.uuid4().hex[:6]}{ext}"
-        sample_path.write_bytes(await sample.read())
+        ext = (Path(sample.filename).suffix or ".wav").lower()
+        raw_path = UPLOADS_DIR / f"upload_{uuid.uuid4().hex[:6]}{ext}"
+        raw_path.write_bytes(await sample.read())
+
+        if ext in audio_utils.VIDEO_EXTS or audio_utils.probe_media(raw_path).get("has_video"):
+            prepared = UPLOADS_DIR / f"sample_{uuid.uuid4().hex[:6]}.wav"
+            try:
+                extracted = audio_utils.extract_voice(
+                    raw_path, prepared, start=start, duration=duration, denoise=denoise
+                )
+                quality = extracted["output_info"]
+                sample_path = prepared
+            except Exception as e:
+                raise HTTPException(
+                    400, f"Não foi possível extrair a voz do vídeo: {e}"
+                )
+        else:
+            prepared = UPLOADS_DIR / f"sample_{uuid.uuid4().hex[:6]}.wav"
+            try:
+                audio_utils.extract_voice(
+                    raw_path, prepared, start=start, duration=duration, denoise=denoise
+                )
+                quality = audio_utils.analyze_wav(prepared)
+                sample_path = prepared
+            except Exception:
+                # mantém o arquivo original se o ffmpeg não estiver disponível
+                sample_path = raw_path
+
     voice = voices_svc.create_cloned_voice(name, language, gender, sample_path, engine)
+    if quality:
+        voice = {**voice, "quality": quality}
     return voice
+
+
+@app.post("/api/voices/extract")
+async def extract_voice_sample(
+    file: UploadFile = File(...),
+    start: float | None = Form(None),
+    duration: float | None = Form(None),
+    denoise: bool = Form(True),
+):
+    """
+    Prepara uma amostra de voz a partir de vídeo/áudio, sem criar a voz.
+    Útil para conferir a qualidade antes de clonar.
+
+    Retorna métricas (duração, pico, RMS, avisos) e o WAV processado.
+    """
+    if not file.filename:
+        raise HTTPException(400, "Envie um arquivo de áudio ou vídeo")
+    ext = (Path(file.filename).suffix or ".wav").lower()
+    raw_path = UPLOADS_DIR / f"upload_{uuid.uuid4().hex[:6]}{ext}"
+    raw_path.write_bytes(await file.read())
+    prepared = UPLOADS_DIR / f"sample_{uuid.uuid4().hex[:6]}.wav"
+    try:
+        result = audio_utils.extract_voice(
+            raw_path, prepared, start=start, duration=duration, denoise=denoise
+        )
+    except Exception as e:
+        raise HTTPException(400, str(e))
+    result["download_url"] = f"/api/uploads/{prepared.name}"
+    return result
+
+@app.get("/api/uploads/{filename}")
+async def get_upload(filename: str):
+    path = (UPLOADS_DIR / filename).resolve()
+    if not str(path).startswith(str(UPLOADS_DIR.resolve())) or not path.exists():
+        raise HTTPException(404, "Arquivo não encontrado")
+    media = "audio/wav" if path.suffix == ".wav" else "application/octet-stream"
+    return FileResponse(path, media_type=media, filename=path.name)
+
 
 @app.post("/api/voices/design")
 async def design_voice(req: DesignRequest):
@@ -548,11 +624,16 @@ async def list_tools():
 # ── Frontend static & SPA fallback ──
 frontend_dir = _backend_dir.parent / "frontend"
 if frontend_dir.exists():
-    # Servir assets se houver build
+    # /frontend/... e também na raiz (index.html referencia "app.js" relativo)
     try:
         app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
-    except:
-        pass
+    except Exception as e:
+        print(f"[frontend] mount /frontend falhou: {e}")
+    # Montado por último: rotas de API declaradas acima têm precedência
+    try:
+        app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="app")
+    except Exception as e:
+        print(f"[frontend] mount / falhou: {e}")
 
 # ── Run helper ──
 if __name__ == "__main__":

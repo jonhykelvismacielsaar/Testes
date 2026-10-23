@@ -48,6 +48,31 @@ O agente usa nativamente `add_voice` e `generate_speech` — mesma qualidade do 
 
 Veja [`docs/ARENA.md`](docs/ARENA.md) para o guia completo de integração.
 
+#### 🎥 Só consigo anexar vídeo (não áudio)? Sem problema
+
+O clone aceita **vídeo** como amostra de voz. Ele extrai a faixa de áudio,
+remove ruído de fundo e normaliza o volume (ffmpeg embutido via `imageio-ffmpeg`):
+
+```bash
+# direto no chat: anexe um vídeo falando e peça "clona essa voz"
+# ou via linha de comando:
+python3 tools/preparar_voz.py meu-video.mp4 -o data/uploads/minha_voz.wav -i 3 -d 20
+#   -i 3   → começa no segundo 3
+#   -d 20  → pega 20 segundos
+#   --ultimo → usa automaticamente o vídeo mais recente do workspace
+
+# conferir qualidade antes de clonar
+curl -X POST http://localhost:3900/api/voices/extract -F file=@meu-video.mp4 -F duration=20
+
+# clonar direto do vídeo (extração automática)
+curl -X POST http://localhost:3900/api/voices/clone \
+  -F name="Minha Voz" -F language=pt-BR -F gender=feminine \
+  -F duration=20 -F sample=@meu-video.mp4
+```
+
+A resposta inclui `quality` com duração, pico, RMS e avisos (amostra curta,
+ruidosa, baixa, saturada). Dica: grave 15–30s falando de frente, sem música.
+
 ### Opção 2 — Backend + Frontend local
 
 ```bash

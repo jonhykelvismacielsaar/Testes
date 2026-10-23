@@ -139,3 +139,66 @@ Tem 7 workspaces idênticos ao Electron original:
 - Conectar `backend.speech_client` Python para ditado nativo (igual VoiceStudio)
 
 Licença: AGPL-3.0 — igual ao original. Uso comercial exige cumprir AGPL ou licença comercial separada.
+
+
+## 7. Clonar voz quando o chat só aceita vídeo 🎥
+
+O Arena aceita anexos de imagem e vídeo; se o áudio não puder ser enviado,
+**grave um vídeo de 15–30s falando** (pode ser a câmera tampada — o que importa
+é o microfone) e peça no chat:
+
+> "Extraia a voz desse vídeo e clone. Depois fale: *seu texto*"
+
+O agente executa:
+
+```bash
+# 1. extrai + limpa + normaliza a voz
+python3 tools/preparar_voz.py meu-video.mp4 -o data/uploads/minha_voz.wav -d 20
+
+# 2. registra a voz no Arena
+add_voice(text="<transcrição da fala>", language="pt-BR",
+          voice_identity={"gender": "feminine", "use_case": "narration"})
+
+# 3. fala qualquer texto com a voz clonada
+generate_speech(file_path="saida.mp3", text="...", voice_id="voice-XX")
+```
+
+### O que a limpeza faz
+
+| Etapa | Filtro | Efeito |
+|---|---|---|
+| 1 | `highpass=80` | remove ruído grave (ventilador, ar-condicionado) |
+| 2 | `lowpass=10000` | remove chiado agudo |
+| 3 | `afftdn` | redução de ruído por FFT |
+| 4 | `loudnorm` | volume padrão de podcast (-16 LUFS) |
+| 5 | `aresample=24000` + mono | formato ideal para clonagem |
+
+### Endpoints novos
+
+```bash
+# preparar amostra (não cria voz) — devolve métricas de qualidade
+POST /api/voices/extract      (multipart: file, start?, duration?, denoise?)
+GET  /api/uploads/{arquivo}   # baixar o WAV processado
+
+# clonar aceitando vídeo
+POST /api/voices/clone        (multipart: name, language, gender, sample,
+                               start?, duration?, denoise?)
+# resposta inclui "quality": {duration, peak_db, rms_db, warnings, ok}
+```
+
+### Qualidade da amostra
+
+O retorno traz avisos automáticos quando:
+- duração < 3s (ruim), < 8s (curta) — ideal 15–30s
+- pico ≥ 0 dBFS (saturação/clipping)
+- RMS < -45 dB (volume baixo)
+- duração > 3min (desnecessário)
+
+### Sem ffmpeg do sistema?
+
+```bash
+pip install imageio-ffmpeg
+```
+
+O módulo `backend/voicestudio/utils/audio.py` detecta `ffmpeg` no PATH e, se
+não houver, usa o binário embutido do `imageio-ffmpeg` automaticamente.

@@ -5,6 +5,7 @@ from datetime import datetime
 from ..config import OUTPUTS_DIR
 from .transcription import transcribe
 from .generation import synthesize
+from ..utils.audio import has_ffmpeg as audio_utils_has_ffmpeg
 
 # Tradução — tentar argos, senão mock
 try:
@@ -64,16 +65,16 @@ async def dub_video(video_path: Path, **kwargs) -> dict:
     """
     Para vídeo: extrai áudio, dubla, remuxa (simulado aqui)
     """
-    # Extrair áudio com ffmpeg se disponível, senão usar video_path direto como áudio
-    import shutil, subprocess, tempfile
+    # Extrai a faixa de voz do vídeo (ffmpeg do sistema ou embutido no imageio-ffmpeg)
+    from ..utils.audio import extract_voice
     audio_path = video_path
-    if shutil.which("ffmpeg"):
+    if audio_utils_has_ffmpeg():
         try:
             tmp_audio = OUTPUTS_DIR / f"extract_{uuid.uuid4().hex[:6]}.wav"
-            subprocess.run(["ffmpeg", "-y", "-i", str(video_path), "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", str(tmp_audio)], capture_output=True, timeout=30)
+            extract_voice(video_path, tmp_audio, denoise=True, normalize=True, target_sr=16000)
             if tmp_audio.exists():
                 audio_path = tmp_audio
         except Exception as e:
-            print(f"[dub_video] ffmpeg falhou: {e}")
+            print(f"[dub_video] extração de áudio falhou: {e}")
 
     return await dub_pipeline(audio_path, **kwargs)

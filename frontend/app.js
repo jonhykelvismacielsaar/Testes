@@ -180,8 +180,19 @@ document.getElementById("doClone")?.addEventListener("click", async ()=>{
   fd.append("engine", currentEngine);
   const file=document.getElementById("cloneFile").files[0];
   if(file) fd.append("sample", file);
+  const start=document.getElementById("cloneStart").value;
+  const duration=document.getElementById("cloneDuration").value;
+  if(start) fd.append("start", start);
+  if(duration) fd.append("duration", duration);
+  const box=document.getElementById("cloneQuality");
   try{
     const v= await fetch("/api/voices/clone",{method:"POST", body:fd}).then(r=>r.json());
+    if(v.detail) throw new Error(v.detail);
+    if(v.quality){
+      const q=v.quality;
+      box.classList.remove("hidden");
+      box.innerHTML=`🎧 Amostra: ${q.duration}s, pico ${q.peak_db} dB, RMS ${q.rms_db} dB${q.warnings&&q.warnings.length?`<br><span class="text-amber-300">⚠️ ${q.warnings.join("<br>⚠️ ")}</span>`:""}`;
+    }
     alert(`Voz clonada: ${v.name} (${v.id})`);
     await loadVoices();
     document.getElementById("voiceSelect").value=v.id;
