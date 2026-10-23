@@ -1,0 +1,78 @@
+[
+  {
+    "id": "pt-BR-FranciscaNeural",
+    "name": "Francisca",
+    "lang": "pt-BR",
+    "gender": "feminine",
+    "engine": "edge-tts",
+    "sample": "Olá, eu sou a Francisca, uma voz brasileira calorosa."
+  },
+  {
+    "id": "pt-BR-AntonioNeural",
+    "name": "Antônio",
+    "lang": "pt-BR",
+    "gender": "masculine",
+    "engine": "edge-tts",
+    "sample": "Olá, eu sou o Antônio, pronto para narrar sua história."
+  },
+  {
+    "id": "en-US-JennyNeural",
+    "name": "Jenny",
+    "lang": "en-US",
+    "gender": "feminine",
+    "engine": "edge-tts",
+    "sample": "Hello, I'm Jenny, your friendly US narrator."
+  },
+  {
+    "id": "en-US-GuyNeural",
+    "name": "Guy",
+    "lang": "en-US",
+    "gender": "masculine",
+    "engine": "edge-tts",
+    "sample": "Hey there, I'm Guy with a natural American voice."
+  },
+  {
+    "id": "es-ES-ElviraNeural",
+    "name": "Elvira",
+    "lang": "es-ES",
+    "gender": "feminine",
+    "engine": "edge-tts",
+    "sample": "Hola, soy Elvira, tu voz española."
+  },
+  {
+    "id": "ja-JP-NanamiNeural",
+    "name": "Nanami",
+    "lang": "ja-JP",
+    "gender": "feminine",
+    "engine": "edge-tts",
+    "sample": "こんにちは、私はナナミです。"
+  },
+  {
+    "id": "fr-FR-DeniseNeural",
+    "name": "Denise",
+    "lang": "fr-FR",
+    "gender": "feminine",
+    "engine": "edge-tts",
+    "sample": "Bonjour, je suis Denise."
+  },
+  {
+    "id": "arena-clone-01",
+    "name": "Voz Clonada (Arena)",
+    "lang": "pt-BR",
+    "gender": "feminine",
+    "engine": "arena-tts",
+    "sample": "Voz clonada via Arena — idêntica à amostra enviada."
+  },
+  {
+    "id": "design-f7ece122",
+    "name": "Narradora Mística",
+    "lang": "pt-BR",
+    "gender": "feminine",
+    "engine": "arena-tts",
+    "base_voice": "pt-BR-FranciscaNeural",
+    "prompt": "voz feminina brasileira jovem, calorosa, envolvente, ritmo calmo, para audiobook",
+    "sample": "Voz desenhada: voz feminina brasileira jovem, calorosa, envolvente, ritmo calmo, para audiobook",
+    "designed": true,
+    "created_at": "2026-10-23T19:20:00.813892"
+  }
+]

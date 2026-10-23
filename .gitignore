@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data/outputs/*
+data/uploads/*
+!data/outputs/.gitkeep
+!data/uploads/.gitkeep
+node_modules/
+dist/
+.DS_Store
+*.log
+data/outputs/*.mp3
+data/outputs/*.wav
+!docs/demo/*.mp3

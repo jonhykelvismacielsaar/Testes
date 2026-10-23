@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceStudio Arena — Estúdio de Voz Local</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Plus Jakarta Sans','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{ink:'#0a0a0f',card:'#14141f',muted:'#8b8ba7',accent:'#7c3aed',accent2:'#ec4899',success:'#10b981'},animation:{float:'float 6s ease-in-out infinite','pulse-slow':'pulse 3s ease-in-out infinite'}}}}
+</script>
+<style>
+*{scrollbar-width:thin;scrollbar-color:#2a2a40 transparent}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:99px}
+.glass{backdrop-filter:blur(16px);background:rgba(20,20,31,0.8)}
+.gradient-text{background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wave{height:32px;display:flex;align-items:center;gap:2px}.wave span{width:3px;background:linear-gradient(to top,#7c3aed,#ec4899);border-radius:99px;animation:wave 0.9s ease-in-out infinite}.wave span:nth-child(2){animation-delay:0.1s}.wave span:nth-child(3){animation-delay:0.2s}.wave span:nth-child(4){animation-delay:0.3s}.wave span:nth-child(5){animation-delay:0.2s}
+@keyframes wave{0%,100%{height:8px}50%{height:28px}}@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.tab-active{border-color:#7c3aed !important;color:white !important;background:rgba(124,58,237,0.15) !important}
+.range{accent-color:#7c3aed}
+</style>
+</head>
+<body class="bg-ink text-white font-sans min-h-screen overflow-x-hidden">
+<!-- Nav -->
+<nav class="sticky top-0 z-50 glass border-b border-white/5">
+  <div class="max-w-[1600px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent2 flex items-center justify-center text-white font-bold text-lg">V</div>
+      <div>
+        <div class="font-extrabold leading-none flex items-center gap-2">VoiceStudio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-accent text-white">ARENA</span></div>
+        <div class="text-xs text-muted">646 idiomas • Local-first • Open-source</div>
+      </div>
+    </div>
+    <div class="hidden lg:flex items-center gap-2 text-xs">
+      <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Backend online</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10">AGPL-3.0</span>
+      <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-full bg-accent hover:bg-accent/90 transition text-white font-semibold">API Docs →</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="https://github.com/debpalash/VoiceStudio" target="_blank" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition"><i class="fab fa-github"></i></a>
+      <button id="mobileMenu" class="lg:hidden w-9 h-9 rounded-full bg-white/5 flex items-center justify-center"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+  <!-- Tabs -->
+  <div class="max-w-[1600px] mx-auto px-2 md:px-6">
+    <div class="flex gap-1.5 overflow-x-auto py-2.5 text-xs font-semibold whitespace-nowrap">
+      <button data-tab="generate" class="tab-btn tab-active px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-microphone"></i> Clonar & Gerar</button>
+      <button data-tab="design" class="tab-btn px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Design de Voz</button>
+      <button data-tab="dub" class="tab-btn px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-clapperboard"></i> Dublagem</button>
+      <button data-tab="transcribe" class="tab-btn px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-closed-captioning"></i> Transcrição</button>
+      <button data-tab="audiobook" class="tab-btn px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-book-open"></i> Audiobook</button>
+      <button data-tab="dictation" class="tab-btn px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-keyboard"></i> Ditado</button>
+      <button data-tab="models" class="tab-btn px-3.5 py-2 rounded-full border border-white/10 bg-white/[0.03] transition flex items-center gap-2"><i class="fa-solid fa-layer-group"></i> Modelos</button>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-[1600px] mx-auto px-4 md:px-6 py-6">
+  <!-- Hero banner -->
+  <div class="rounded-[24px] bg-gradient-to-br from-accent via-[#9f55ff] to-accent2 p-[1px] mb-6">
+    <div class="rounded-[23px] bg-card p-5 md:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent2 items-center justify-center text-2xl">🎙️</div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-extrabold leading-tight">Seu estúdio de voz, <span class="gradient-text">100% local</span></h1>
+          <p class="text-sm text-muted max-w-2xl">Clone qualquer voz com 10s de áudio, dubla vídeos, transcreve e cria audiobooks — tudo no seu hardware. Compatível com a API da OpenAI.</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 text-xs">
+        <span class="px-3 py-2 rounded-full bg-white text-ink font-bold flex items-center gap-2"><i class="fa-solid fa-bolt"></i> 646 idiomas</span>
+        <span class="px-3 py-2 rounded-full bg-white/10 border border-white/10 flex items-center gap-2">⚡ CUDA & CPU</span>
+        <span class="px-3 py-2 rounded-full bg-white/10 border border-white/10 flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> Sem nuvem</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-6">
+    <!-- Main content -->
+    <div class="col-span-12 lg:col-span-8 space-y-6">
+      <!-- TAB: Generate / Clone -->
+      <section id="tab-generate" class="tab-pane">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-microphone"></i></span> Clonagem & Geração</h2>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-success/15 text-success border border-success/20 font-semibold">Arena TTS ativo</span>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 mb-5">
+            <div class="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+              <div class="text-xs font-bold text-muted uppercase tracking-widest mb-3">1. Escolha ou clone a voz</div>
+              <select id="voiceSelect" class="w-full bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:border-accent outline-none"></select>
+              <div class="mt-3 flex gap-2">
+                <button id="previewVoice" class="flex-1 py-2 rounded-full bg-white text-ink font-bold text-sm hover:bg-white/90 transition"><i class="fa-solid fa-play mr-1"></i> Preview</button>
+                <button id="openClone" class="flex-1 py-2 rounded-full bg-white/5 border border-white/10 font-semibold text-sm hover:bg-white/10 transition">+ Clonar voz</button>
+              </div>
+              <!-- Clone form (collapsible) -->
+              <div id="cloneForm" class="hidden mt-4 p-3 rounded-xl bg-ink border border-white/5 space-y-3">
+                <input id="cloneName" placeholder="Nome da voz (ex: Minha Voz)" class="w-full bg-card border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-accent">
+                <div class="grid grid-cols-2 gap-2">
+                  <select id="cloneLang" class="bg-card border border-white/10 rounded-lg px-2 py-2 text-sm"></select>
+                  <select id="cloneGender" class="bg-card border border-white/10 rounded-lg px-2 py-2 text-sm"><option value="feminine">Feminina</option><option value="masculine">Masculina</option></select>
+                </div>
+                <label class="block text-xs text-muted">Amostra (10-20s, limpa, sem ruído):</label>
+                <input id="cloneFile" type="file" accept="audio/*" class="w-full text-xs bg-card border border-white/10 rounded-lg px-2 py-2">
+                <button id="doClone" class="w-full py-2 rounded-full bg-accent text-white font-bold text-sm hover:bg-accent/90 transition">Clonar agora</button>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+              <div class="text-xs font-bold text-muted uppercase tracking-widest mb-3">2. Motor</div>
+              <div id="engineChips" class="flex flex-wrap gap-2 mb-4"></div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted">Formato</span>
+                <select id="formatSelect" class="bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-xs"><option value="wav">WAV</option><option value="mp3">MP3</option><option value="ogg">OGG/Opus</option></select>
+              </div>
+              <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <label>Velocidade <input id="rateRange" type="range" min="-50" max="50" value="0" class="w-full range"><span id="rateVal" class="ml-2 font-mono">+0%</span></label>
+                <label>Tom <input id="pitchRange" type="range" min="-12" max="12" value="0" class="w-full range"><span id="pitchVal" class="ml-2 font-mono">+0Hz</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-muted uppercase tracking-widest">Texto</label>
+              <span class="text-xs font-mono text-muted"><span id="charCount">0</span>/8000</span>
+            </div>
+            <textarea id="ttsText" rows="5" placeholder="Digite aqui... Ex: Olá! Bem-vindo ao VoiceStudio Arena, seu estúdio de voz local com 646 idiomas. Clone sua voz e crie o que imaginar." class="w-full bg-ink border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-accent outline-none resize-none"></textarea>
+            <div class="flex flex-wrap gap-2">
+              <button data-sample="Olá! Eu sou uma voz clonada do VoiceStudio Arena. Posso falar qualquer idioma com apenas alguns segundos da sua voz." class="sample-btn text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition">Português demo</button>
+              <button data-sample="Hello! I'm your cloned voice from VoiceStudio Arena. I can speak in any language and keep your emotion and tone." class="sample-btn text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition">English demo</button>
+              <button data-sample="¡Hola! Soy tu voz clonada. Puedo doblar videos y crear audiolibros manteniendo tu estilo único." class="sample-btn text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition">Español demo</button>
+            </div>
+            <button id="btnGenerate" class="w-full py-3 rounded-xl bg-gradient-to-r from-accent to-accent2 text-white font-extrabold text-sm hover:opacity-90 transition flex items-center justify-center gap-2">
+              <span id="genIcon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar áudio
+              <span id="genSpinner" class="hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            </button>
+          </div>
+
+          <!-- Output -->
+          <div id="genOutput" class="hidden mt-5 p-4 rounded-xl bg-ink border border-accent/20">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="wave"><span></span><span></span><span></span><span></span><span></span></div>
+              <span class="text-sm font-bold">Áudio gerado</span>
+              <span id="genMeta" class="text-xs text-muted font-mono"></span>
+              <span class="ml-auto text-xs px-2 py-1 rounded-full bg-success/15 text-success">pronto</span>
+            </div>
+            <audio id="genAudio" controls class="w-full"></audio>
+            <div class="mt-3 flex flex-wrap gap-2 text-xs">
+              <a id="genDownload" download class="px-3 py-1.5 rounded-full bg-white text-ink font-bold">↓ Download</a>
+              <button class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10" onclick="navigator.clipboard.writeText(document.getElementById('genAudio').src)">Copiar link</button>
+              <button id="btnAddToBook" class="px-3 py-1.5 rounded-full bg-accent text-white font-bold">+ Adicionar ao Audiobook</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="rounded-2xl bg-card border border-white/5 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-sm">Histórico recente</h3>
+            <button onclick="loadHistory()" class="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10">⟳ Atualizar</button>
+          </div>
+          <div id="historyList" class="space-y-2 max-h-[320px] overflow-auto"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Voice Design -->
+      <section id="tab-design" class="tab-pane hidden">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <h2 class="font-bold text-lg flex items-center gap-2 mb-1"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Voice Design</h2>
+          <p class="text-sm text-muted mb-5">Descreva a voz que você quer. O motor cria um perfil reutilizável — sem precisar de áudio de referência.</p>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <input id="designName" placeholder="Nome da voz (ex: Narradora Jovem)" class="bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:border-accent outline-none">
+            <div class="flex gap-2">
+              <select id="designLang" class="flex-1 bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm"></select>
+              <select id="designGender" class="bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm"><option value="feminine">Feminina</option><option value="masculine">Masculina</option></select>
+            </div>
+          </div>
+          <textarea id="designPrompt" rows="4" placeholder="Ex: voz feminina brasileira jovem, calorosa e envolvente, ritmo moderado, levemente sussurrada, perfeita para meditação guiada..." class="w-full bg-ink border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-accent outline-none"></textarea>
+          <div class="mt-3">
+            <div class="text-xs font-bold text-muted uppercase tracking-widest mb-2">Presets</div>
+            <div id="presetChips" class="flex flex-wrap gap-2"></div>
+          </div>
+          <button id="btnDesign" class="mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-accent to-accent2 text-white font-extrabold text-sm">✨ Criar voz desenhada</button>
+          <div id="designResult" class="hidden mt-4 p-3 rounded-xl bg-ink border border-success/20 text-sm"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Dubbing -->
+      <section id="tab-dub" class="tab-pane hidden">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-clapperboard"></i></span> Dublagem de Vídeo/Áudio</h2>
+          <p class="text-sm text-muted mb-4">Transcreve → Traduz → Gera nova locução. Preserva timestamps para SRT.</p>
+          <div class="grid md:grid-cols-3 gap-3 mb-4">
+            <label class="text-xs">Origem <select id="dubSource" class="w-full mt-1 bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm"></select></label>
+            <label class="text-xs">Destino <select id="dubTarget" class="w-full mt-1 bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm"></select></label>
+            <label class="text-xs">Voz destino <select id="dubVoice" class="w-full mt-1 bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm"></select></label>
+          </div>
+          <div class="rounded-xl border-2 border-dashed border-white/10 p-6 text-center bg-ink/50 mb-4">
+            <input id="dubFile" type="file" accept="audio/*,video/*" class="hidden">
+            <button onclick="document.getElementById('dubFile').click()" class="px-5 py-2.5 rounded-full bg-white text-ink font-bold text-sm">Escolher áudio/vídeo</button>
+            <div id="dubFileName" class="text-xs text-muted mt-2">ou arraste aqui (MP3, WAV, MP4, MOV)</div>
+            <div class="text-xs text-muted mt-3">Também pode colar texto direto abaixo:</div>
+            <textarea id="dubText" rows="3" placeholder="Cole o texto para traduzir e dublar..." class="mt-2 w-full bg-card border border-white/10 rounded-xl px-3 py-2 text-sm"></textarea>
+          </div>
+          <button id="btnDub" class="w-full py-3 rounded-xl bg-gradient-to-r from-accent to-accent2 text-white font-extrabold text-sm">🌐 Dublar agora</button>
+          <div id="dubOutput" class="hidden mt-4 space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Transcribe -->
+      <section id="tab-transcribe" class="tab-pane hidden">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-closed-captioning"></i></span> Transcrição</h2>
+          <p class="text-sm text-muted mb-4">WhisperX / faster-whisper local. Suporta diarização (quem fala quando).</p>
+          <div class="flex gap-2 mb-4 text-xs">
+            <select id="sttLang" class="bg-ink border border-white/10 rounded-lg px-3 py-2"><option value="">Auto-detectar</option><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select>
+            <label class="flex items-center gap-2 bg-ink border border-white/10 rounded-lg px-3 py-2 cursor-pointer"><input id="sttDiarize" type="checkbox"> Diarização</label>
+            <button id="btnRecord" class="ml-auto px-4 py-2 rounded-full bg-white text-ink font-bold text-xs"><i class="fa-solid fa-microphone"></i> Gravar</button>
+          </div>
+          <div class="rounded-xl border-2 border-dashed border-white/10 p-6 text-center bg-ink/50 mb-4">
+            <input id="sttFile" type="file" accept="audio/*,video/*" class="hidden">
+            <button onclick="document.getElementById('sttFile').click()" class="px-5 py-2.5 rounded-full bg-accent text-white font-bold text-sm">Enviar áudio</button>
+            <div id="sttFileName" class="text-xs text-muted mt-2">MP3, WAV, M4A, MP4 até ~100MB</div>
+          </div>
+          <button id="btnTranscribe" class="w-full py-3 rounded-xl bg-gradient-to-r from-accent to-accent2 text-white font-extrabold text-sm">Transcrever</button>
+          <div id="sttOutput" class="hidden mt-4 p-4 rounded-xl bg-ink border border-white/10 text-sm whitespace-pre-wrap"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Audiobook -->
+      <section id="tab-audiobook" class="tab-pane hidden">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-book-open"></i></span> Audiobook & Histórias</h2>
+          <p class="text-sm text-muted mb-4">Cole um texto longo ou PDF → quebra em capítulos → gera em lote.</p>
+          <input id="bookTitle" placeholder="Título do audiobook" value="Meu Audiobook" class="w-full bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm mb-3 focus:border-accent outline-none">
+          <div class="flex gap-2 mb-3">
+            <select id="bookVoice" class="flex-1 bg-ink border border-white/10 rounded-xl px-3 py-2.5 text-sm"></select>
+            <label class="px-3 py-2 rounded-xl bg-ink border border-white/10 text-xs flex items-center gap-2 cursor-pointer"><input id="bookPdf" type="file" accept=".pdf" class="hidden"><span>📄 PDF</span></label>
+          </div>
+          <textarea id="bookText" rows="10" placeholder="Cole seu texto aqui... Pode usar '## Capítulo 1' para marcar capítulos." class="w-full bg-ink border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-accent outline-none"></textarea>
+          <div class="mt-3 flex gap-2">
+            <button id="btnAudiobook" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-accent to-accent2 text-white font-extrabold text-sm">📚 Criar audiobook</button>
+            <button id="btnLongform" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm">Modo long-form</button>
+          </div>
+          <div id="bookOutput" class="hidden mt-4 space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Dictation -->
+      <section id="tab-dictation" class="tab-pane hidden">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-keyboard"></i></span> Ditado ao vivo</h2>
+          <p class="text-sm text-muted mb-4">WebSocket streaming — parciais em tempo real. Use o atalho global no app desktop ou o mic do navegador aqui.</p>
+          <div class="flex gap-2 mb-4">
+            <button id="btnDictStart" class="flex-1 py-3 rounded-xl bg-success text-white font-bold text-sm">▶️ Iniciar ditado</button>
+            <button id="btnDictStop" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 font-bold text-sm" disabled>⏹️ Parar</button>
+          </div>
+          <div class="rounded-xl bg-ink border border-white/10 p-4 min-h-[160px]">
+            <div class="text-xs font-bold text-muted uppercase tracking-widest mb-2">Transcrição ao vivo</div>
+            <div id="dictLive" class="text-sm text-white/80">Aguardando...</div>
+            <div id="dictFinal" class="mt-3 p-3 rounded-lg bg-card border border-white/5 text-sm hidden"></div>
+          </div>
+          <div class="mt-4 text-xs text-muted">Endpoint: <code class="bg-white/5 px-1.5 py-0.5 rounded">ws://localhost:3900/v1/audio/transcriptions/stream</code> • Também compatível com <code>ws://…/ws/transcribe</code></div>
+        </div>
+      </section>
+
+      <!-- TAB: Models -->
+      <section id="tab-models" class="tab-pane hidden">
+        <div class="rounded-2xl bg-card border border-white/5 p-5 md:p-6">
+          <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent"><i class="fa-solid fa-layer-group"></i></span> Modelos & Engines</h2>
+          <p class="text-sm text-muted mb-4">Instale os pesos HuggingFace necessários. O TTS básico (OmniVoice) é obrigatório; ASR é sob demanda.</p>
+          <div id="modelsGrid" class="grid md:grid-cols-2 gap-3"></div>
+          <div class="mt-6 rounded-xl bg-ink border border-white/5 p-4 text-xs text-muted">
+            <div class="font-bold text-white mb-2">Hardware detectado</div>
+            <div id="hwInfo">Detectando...</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right sidebar -->
+    <div class="col-span-12 lg:col-span-4 space-y-6">
+      <div class="rounded-2xl bg-card border border-white/5 p-5">
+        <h3 class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-bolt text-accent"></i> Ações rápidas</h3>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button onclick="switchTab('generate')" class="p-3 rounded-xl bg-ink border border-white/5 hover:border-accent/50 transition text-left"><div class="font-bold">Gerar voz</div><div class="text-muted">Clonar → sintetizar</div></button>
+          <button onclick="switchTab('dub')" class="p-3 rounded-xl bg-ink border border-white/5 hover:border-accent/50 transition text-left"><div class="font-bold">Dublar vídeo</div><div class="text-muted">YouTube → PT-BR</div></button>
+          <button onclick="switchTab('transcribe')" class="p-3 rounded-xl bg-ink border border-white/5 hover:border-accent/50 transition text-left"><div class="font-bold">Transcrever</div><div class="text-muted">Áudio → SRT</div></button>
+          <button onclick="switchTab('audiobook')" class="p-3 rounded-xl bg-ink border border-white/5 hover:border-accent/50 transition text-left"><div class="font-bold">Audiobook</div><div class="text-muted">PDF → MP3</div></button>
+        </div>
+        <div class="mt-4 p-3 rounded-xl bg-accent/10 border border-accent/20 text-xs">
+          <div class="font-bold mb-1">💡 Usando no Arena?</div>
+          <p class="text-muted">O agente já pode chamar <code class="text-accent">add_voice</code> e <code class="generate_speech</code> para TTS, e este backend para o resto. Veja <code>docs/ARENA.md</code>.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-card border border-white/5 p-5">
+        <h3 class="font-bold text-sm mb-3">Vozes recentes</h3>
+        <div id="voicesList" class="space-y-2 max-h-[300px] overflow-auto"></div>
+        <a href="/api/voices" target="_blank" class="mt-3 block text-xs text-center py-2 rounded-full bg-white/5 border border-white/10">Ver JSON da API →</a>
+      </div>
+
+      <div class="rounded-2xl bg-card border border-white/5 p-5">
+        <h3 class="font-bold text-sm mb-3">API rápida (curl)</h3>
+        <pre class="bg-ink rounded-xl p-3 text-[11px] font-mono text-muted overflow-x-auto">curl -X POST http://localhost:3900/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Olá mundo","voice":"pt-BR-FranciscaNeural"}'
+
+# OpenAI-compat
+curl http://localhost:3900/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"model":"tts-1","input":"Hello!","voice":"alloy"}'</pre>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-accent to-accent2 p-[1px]">
+        <div class="rounded-[15px] bg-card p-4">
+          <div class="text-sm font-bold">Open-source • AGPL-3.0</div>
+          <div class="text-xs text-muted mt-1">Baseado em <a href="https://github.com/debpalash/VoiceStudio" class="text-accent underline" target="_blank">debpalash/VoiceStudio</a>. Clone de funcionalidades para uso no Arena.ai.</div>
+          <div class="mt-3 flex gap-2 text-xs">
+            <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-full bg-white text-ink font-bold">Docs</a>
+            <a href="https://github.com/debpalash/VoiceStudio/blob/main/docs/speech-platform.md" target="_blank" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10">Speech Platform</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-10 py-6 border-t border-white/5 text-center text-xs text-muted">
+    VoiceStudio Arena • Clone funcional do <a href="https://github.com/debpalash/VoiceStudio" target="_blank" class="underline">VoiceStudio</a> • Feito com ♥ para o Arena.ai • <span id="footerVer"></span>
+  </footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
